@@ -1,73 +1,46 @@
-import unittest
 import sqlite3
-import json
-import os
 import matplotlib.pyplot as plt
 import requests
+from datetime import datetime
 
-# Enter your API key here
-api_key = "Your_API_Key"
+def setUpDatabase(db_name):
+	api_key = "INSERT"
+	base_url = "http://api.openweathermap.org/data/2.5/weather?"
+	city_name = "Ann+Arbor"
+	complete_url = f"{base_url}q={city_name}&appid={api_key}"
+	conn = sqlite3.connect("/Users/laurenpesce/Desktop/SI\ 206\ Final\ Project/open_weather.db")
+	cur = conn.cursor()
+	return cur, conn, complete_url
 
-# base_url variable to store url
-base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
-# Give city name
-city_name = input("Enter city name : ")
+def create_weather_db(cur, conn):
+	cur.execute("CREATE TABLE IF NOT EXISTS weather (temp INTEGER PRIMARY KEY, month INTEGER, day INTEGER, year INTEGER)")
+	conn.commit()
+	
+def add_weather_data(cur, conn, complete_url):
+	response = requests.get(complete_url)
+	weather_data = response.json()
+	if weather_data["cod"] != "404":
+		main_key = weather_data["main"]
+		temp = main_key["temp"]["max"]
+		date = datetime.utcfromtimestamp(weather_data["dt"]).strftime('%Y-%m-%d')
+		month, day, year = map(int, date.split('-'))
+		cur.execute("INSERT OR IGNORE INTO weather (temp, month, date, year) VALUES(?, ?, ?, ?)", (temp, month, day, year))
+		conn.commit()
+	conn.close()
+	
 
-# complete_url variable to store
-# complete url address
-complete_url = base_url + "appid=" + api_key + "&q=" + city_name
+def main():
+    # SETUP DATABASE AND TABLE
+	cur, conn = setUpDatabase('open_weather.db')
+	create_weather_db(cur, conn)
+	api_key = "INSERT"
+	base_url = "http://api.openweathermap.org/data/2.5/weather?"
+	city_name = "Ann+Arbor"
+	complete_url = f"{base_url}q={city_name}&appid={api_key}"
+	add_weather_data(cur, conn, complete_url)
 
-# get method of requests module
-# return response object
-response = requests.get(complete_url)
 
-# json method of response object 
-# convert json format data into
-# python format data
-x = response.json()
-
-# Now x contains list of nested dictionaries
-# Check the value of "cod" key is equal to
-# "404", means city is found otherwise,
-# city is not found
-if x["cod"] != "404":
-
-	# store the value of "main"
-	# key in variable y
-	y = x["main"]
-
-	# store the value corresponding
-	# to the "temp" key of y
-	current_temperature = y["temp"]
-
-	# store the value corresponding
-	# to the "pressure" key of y
-	current_pressure = y["pressure"]
-
-	# store the value corresponding
-	# to the "humidity" key of y
-	current_humidity = y["humidity"]
-
-	# store the value of "weather"
-	# key in variable z
-	z = x["weather"]
-
-	# store the value corresponding 
-	# to the "description" key at 
-	# the 0th index of z
-	weather_description = z[0]["description"]
-
-	# print following values
-	print(" Temperature (in kelvin unit) = " +
-					str(current_temperature) +
-		"\n atmospheric pressure (in hPa unit) = " +
-					str(current_pressure) +
-		"\n humidity (in percentage) = " +
-					str(current_humidity) +
-		"\n description = " +
-					str(weather_description))
-
-else:
-	print(" City Not Found ")
-
+if __name__ == "__main__":
+    main()
+	
