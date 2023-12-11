@@ -18,9 +18,9 @@ def create_weather_table(cur, conn):
 
 #Adds data to the weather table
 def add_weather_data(cur, conn):
-    #Start date of 1,000 days ago, loops through until it gets to the present day
+    #Start date of 1,000 days ago, loops through 25 times each time the program is run, date is changed to reflect 25 days later
     start_date = datetime(2021, 3, 16)
-    for i in range(1000):
+    for i in range(25):
           current_date = start_date + timedelta(days=i)
           date = current_date.strftime("%Y-%d-%m")
           url = f"https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=42.279594&lon=-83.732124&date={date}&tz=-05:00&appid={INSERT API KEY}"
