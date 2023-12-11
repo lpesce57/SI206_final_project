@@ -27,7 +27,7 @@ def add_weather_data(cur, conn):
         while date_in_database(cur, start_date):
             current_date += timedelta(days=1)
             date = current_date.strftime("%Y-%m-%d")
-        url = f"https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=42.279594&lon=-83.732124&date={date}&tz=-05:00&appid=3f373cf454bf98836056a1458a6e2935"
+        url = f"https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=42.279594&lon=-83.732124&date={date}&tz=-05:00&appid={INSERT_KEY}"
         response = requests.get(url)
         data = response.json()
         #Checks the error code and then records the high/low temperatures
