@@ -2,7 +2,7 @@ import sqlite3
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 #Sets up the database that will read from Open Weather 
 def setUpDatabase(database):
@@ -12,57 +12,45 @@ def setUpDatabase(database):
 
 #Creates a weather data table with UTC, date, high temperature and low temperature
 def create_weather_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS weather (utc INTEGER PRIMARY KEY, date TEXT, high_temp REAL, low_temp REAL)")
+    cur.execute("CREATE TABLE IF NOT EXISTS weather (date TEXT PRIMARY KEY, high_temp REAL, low_temp REAL)")
     conn.commit()
 
 
 #Adds data to the weather table
 def add_weather_data(cur, conn):
-    #URL to access Open Weathers data in Ann Arbor
-    url = "https://history.openweathermap.org/data/2.5/history/city?lat=42.279594&lon=-83.732124&type=hour&start=439788694&end=1702074636&appid=(API KEY)"
-    response = requests.get(url)
-    data = response.json()
-    
-	#Checks the error code and then creates weather_data to store data from the API, looks specifically at "list" section
-    if data.get("cod") != "404":
-        weather_data = data.get("list", [])
-
-		#Goes through and records all the data we are searching for
-        for weather in weather_data:
-            #Within the list, accesses data in the main category
-            main_data = weather.get("main", {})
-            #Finds the high and low temperatures of the day
-            high_temp = main_data.get("temp_max", 0)
-            low_temp = main_data.get("temp_min", 0)
-            #Gets the UTC
-            utc = weather.get("dt", 0)
-            #Converts the UTC to a date formatted as "December 23, 2023"
-            utc_datetime = datetime.utcfromtimestamp(utc)
-            date = utc_datetime.strftime("%B %d, %Y")
+    #Start date of 1,000 days ago, loops through until it gets to the present day
+    start_date = datetime(2021, 3, 16)
+    for i in range(1000):
+          current_date = start_date + timedelta(days=i)
+          date = current_date.strftime("%Y-%d-%m")
+          url = f"https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=42.279594&lon=-83.732124&date={date}&tz=-05:00&appid={INSERT API KEY}"
+          response = requests.get(url)
+          data = response.json()
+          #Checks the error code and then records the high/low temperatures
+          if data.get("cod") != "404":
+            temp_data = data.get("temperature", {})
+            high_temp = temp_data.get("max", 0)
+            low_temp = temp_data.get("min", 0)
             #Places all data into the database
-            cur.execute("INSERT OR IGNORE INTO weather (utc, date, high_temp, low_temp) VALUES(?, ?, ?, ?)", (utc, date, high_temp, low_temp))
-
-        conn.commit()
-
+            cur.execute("INSERT OR IGNORE INTO weather (date, high_temp, low_temp) VALUES(?, ?, ?)", (date, high_temp, low_temp))
+    conn.commit()
 
 #Creates a plot of the average temperature each day recorded
 def plot_weather_data(database):
     conn = sqlite3.connect(database)
     cur = conn.cursor()
 
-    cur.execute("SELECT utc, high_temp, low_temp FROM weather")
+    cur.execute("SELECT date, high_temp, low_temp FROM weather")
     data = cur.fetchall()
     
     daily_average = {}
     
 	#Goes through data from the database and places it into a dictionary
-    for utc, high_temp, low_temp in data:
-        #Gets the current date
-        curr_date = datetime.strptime(utc, "%B %d, %Y").date()
+    for date, high_temp, low_temp in data:
         #Finds the mean of the daily high/low
         average_temp = (high_temp + low_temp) / 2
         #Adds the daily average to the dictionary
-        daily_average[curr_date] = average_temp
+        daily_average[date] = average_temp
 
 	#Dates is the keys and temperature is the values
     dates = list(daily_average.keys())
@@ -80,6 +68,7 @@ def plot_weather_data(database):
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
     plt.show()
+    print("SUCCESS")
     
 
 
