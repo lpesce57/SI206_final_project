@@ -33,7 +33,7 @@ def plot_weather_data(database):
     
 
 def main():
-    plot_weather_data('open_weather.db')
+    plot_weather_data('final_project.db')
 
 if __name__ == "__main__":
     main()
