@@ -51,13 +51,30 @@ def get_movie_data(cur, conn):
         cur.execute("INSERT OR IGNORE INTO movies (id, title, year, rating, duration) VALUES(?, ?, ?, ?, ?)", (id_num, title, year, rating, duration))
     conn.commit()
 
-# Executes all of the functions
+#Writes to a text file
+def compute_average_rating(cur):
+    #Retrieve all ratings from the database
+    cur.execute("SELECT rating FROM movies")
+    ratings = cur.fetchall()
+ 
+    #Calculate the average rating
+    total_ratings = sum(rating[0] for rating in ratings)
+    average_rating = total_ratings / len(ratings)
+
+    #Write the average rating to average_rating.txt
+    file_path = os.path.join(os.path.dirname(__file__), 'average_rating.txt')
+    with open(file_path, 'w') as file:
+        file.write(f'Average Rating: {average_rating}')
+
+    print(f'Average Rating: {average_rating}')
+
+#Executes all of the functions
 def main():
     cur, conn = setUpDatabase('final_project.db')
     create_movies_table(cur, conn)
     get_movie_data(cur, conn)
+    compute_average_rating(cur)
     conn.close()
 
 if __name__ == "__main__":
     main()
-    
