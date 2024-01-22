@@ -2,7 +2,8 @@ This project accessed 4 different APIs using Python code to gather information a
 
 Locating Various Data:
 -APIs: imdb_api.py, omdb_api.py, open_weather_api.py and rotten_tomatoes_api.py
--Database: movie_weather.db
+-Database: final_project.db
 -Code for Plotting the Data: data_plot.py
 -Visualizations: figure_1.png, figure_2.png and figure_3.png
--Text Calculations: 
+-Text Calculations: average_omdb_rating.txt, average_rating.txt
+-In-depth Report: SI206 Final Project Report
