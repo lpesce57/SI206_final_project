@@ -1,5 +1,6 @@
 import sqlite3
 import matplotlib.pyplot as plt
+import pandas as pd
 
 #Sets up the database that will read from rotten tomatoes
 def setUpDatabase(database):
@@ -173,6 +174,47 @@ def plot_average_ratings_by_category(cur, conn, database):
     plt.title('Average Rating for Each Rating Type')
     plt.show()
 
+#Plots the correlation between the average rating of the movie and the duration
+def plot_rating_vs_duration(cur, conn, database):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+
+    #Finds the rating and duration from the OMDB database and assigns them
+    df = pd.read_sql_query("SELECT rating, duration FROM omdb", cur)
+    df['duration'] = pd.to_numeric(df['duration'], errors='coerce')
+    df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+
+    #Plots the correlation
+    plt.figure(figsize=(10, 8))
+    plt.scatter(df['duration'], df['rating'])
+    plt.xlabel("Duration")
+    plt.ylabel("Rating")
+    plt.title("Correlation Between Duration and Rating")
+    plt.show()
+
+#Plots the duration of the movies over time
+def plot_duration_over_time(cur, conn, database):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+
+    df = pd.read_sql_query("SELECT date, duration FROM omdb", cur)
+
+#Convert date to datetime format, if it's not
+    df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+
+#Convert rating to numeric values, if it's not
+    df['duration'] = pd.to_numeric(df['duration'], errors='coerce')
+    df = df.sort_values('date')
+
+
+#Plots the data
+    plt.figure(figsize=(10, 8))
+    plt.plot(df['date'], df['duration'], '-o')
+    plt.xlabel("Date")
+    plt.ylabel("duration")
+    plt.title("Duration Over Time")
+    plt.show()
+
 
 #Create all plots
 def main():
@@ -180,8 +222,9 @@ def main():
     plot_rating_differences(cur, conn, 'final_project.db')
     plot_weather(cur, conn, 'final_project.db')
     plot_average_ratings_by_category(cur, conn, 'final_project.db')
+    plot_rating_vs_duration(cur, conn, 'final_project.db')
+    plot_duration_over_time(cur, conn, 'final_project.db')
     
 
 if __name__ == "__main__":
     main()
-
